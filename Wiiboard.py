@@ -1,5 +1,23 @@
 import socket
 
+# Wiiboard Parameters
+CONTINUOUS_REPORTING = "04"  # Easier as string with leading zero
+COMMAND_LIGHT = 11
+COMMAND_REPORTING = 12
+COMMAND_REQUEST_STATUS = 15
+COMMAND_REGISTER = 16
+COMMAND_READ_REGISTER = 17
+INPUT_STATUS = 20
+INPUT_READ_DATA = 21
+EXTENSION_8BYTES = 32
+BUTTON_DOWN_MASK = 8
+TOP_RIGHT = 0
+BOTTOM_RIGHT = 1
+TOP_LEFT = 2
+BOTTOM_LEFT = 3
+BLUETOOTH_NAME = "Nintendo RVL-WBC-01"
+#---------------------------------------
+
 
 class BoardEvent:
     def __init__(self, topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased):
@@ -35,16 +53,15 @@ class Wiiboard:
         self.lastEvent = BoardEvent(0, 0, 0, 0, False, False)
 
         try:
-            self.receivesocket = socket.socket(family=31, type=1, proto=0, fileno=None) # --> AF_BLUTOOTH=31 SOCK_STREAM=1 BTPROTO_L2CAP=0
-            self.controlsocket = socket.socket(family=31, type=1, proto=0, fileno=None) # --> AF_BLUTOOTH=31 SOCK_STREAM=1 BTPROTO_L2CAP=0
+            self.receivesocket = socket.socket(family=socket.AF_BLUETOOTH, type=socket.SOCK_STREAM, proto=socket.BTPROTO_L2CAP, fileno=None)
+            self.controlsocket = socket.socket(family=socket.AF_BLUETOOTH, type=socket.SOCK_STREAM, proto=socket.BTPROTO_L2CAP, fileno=None)
         except ValueError:
             raise Exception("Error: Bluetooth not found")
 
-"""
+
     #called when status set to connected
     def isConnected(self):
         return self.status == "Connected"
-"""
 
     # Connect to the Wiiboard at bluetooth address <address>
     def connect(self, address):
@@ -55,7 +72,8 @@ class Wiiboard:
         self.controlsocket.connect((address, 0x11))
         if self.receivesocket and self.controlsocket:
             print "Connected to Wiiboard at address " + address
-            self.status = "Connected"
+           # self.status = "Connected"
+            self.status = self.isConnected()
             self.address = address
             self.calibrate()
             useExt = ["00", COMMAND_REGISTER, "04", "A4", "00", "40", "00"]
