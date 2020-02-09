@@ -19,19 +19,6 @@ BLUETOOTH_NAME = "Nintendo RVL-WBC-01"
 #---------------------------------------
 
 
-class BoardEvent:
-    def __init__(self, topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased):
-
-        self.topLeft = topLeft
-        self.topRight = topRight
-        self.bottomLeft = bottomLeft
-        self.bottomRight = bottomRight
-        self.buttonPressed = buttonPressed
-        self.buttonReleased = buttonReleased
-        #convenience value
-        self.totalWeight = topLeft + topRight + bottomLeft + bottomRight
-
-
 class Wiiboard:
     def __init__(self, processor):
         # Sockets and status
@@ -50,13 +37,26 @@ class Wiiboard:
                 self.calibration[i].append(10000)  # high dummy value so events with it don't register
 
         self.status = "Disconnected"
-        self.lastEvent = BoardEvent(0, 0, 0, 0, False, False)
+        self.lastEvent = self.BoardEvent(0, 0, 0, 0, False, False)
 
         try:
             self.receivesocket = socket.socket(family=socket.AF_BLUETOOTH, type=socket.SOCK_STREAM, proto=socket.BTPROTO_L2CAP, fileno=None)
             self.controlsocket = socket.socket(family=socket.AF_BLUETOOTH, type=socket.SOCK_STREAM, proto=socket.BTPROTO_L2CAP, fileno=None)
         except ValueError:
             raise Exception("Error: Bluetooth not found")
+
+
+    def BoardEvent(self, topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased):
+
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+        self.buttonPressed = buttonPressed
+        self.buttonReleased = buttonReleased
+        #convenience value
+        self.totalWeight = topLeft + topRight + bottomLeft + bottomRight
+
 
 
     #called when status set to connected
@@ -72,8 +72,7 @@ class Wiiboard:
         self.controlsocket.connect((address, 0x11))
         if self.receivesocket and self.controlsocket:
             print "Connected to Wiiboard at address " + address
-           # self.status = "Connected"
-            self.status = self.isConnected()
+            self.status = "Connected"
             self.address = address
             self.calibrate()
             useExt = ["00", COMMAND_REGISTER, "04", "A4", "00", "40", "00"]
@@ -158,7 +157,7 @@ class Wiiboard:
         topRight = self.calcMass(rawTR, TOP_RIGHT)
         bottomLeft = self.calcMass(rawBL, BOTTOM_LEFT)
         bottomRight = self.calcMass(rawBR, BOTTOM_RIGHT)
-        boardEvent = BoardEvent(topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased)
+        boardEvent = self.BoardEvent(topLeft, topRight, bottomLeft, bottomRight, buttonPressed, buttonReleased)
         return boardEvent
 
     def calcMass(self, raw, pos):
